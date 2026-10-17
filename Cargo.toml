@@ -1,0 +1,16 @@
+[package]
+name = "eloquence-contours"
+version = "1.0.0"
+edition = "2021"
+license = "GPL-2.0-only"
+description = "Host-independent Eloquence PCM contours with a versioned C ABI"
+
+[lib]
+crate-type = ["rlib", "cdylib"]
+
+[profile.release]
+codegen-units = 1
+lto = "fat"
+opt-level = 3
+panic = "abort"
+strip = "symbols"

@@ -9,7 +9,11 @@ fn abi_matches_streaming_processor_and_reset() {
             (0, PresenceContour::Disabled),
             (1, PresenceContour::Enabled),
             (2, PresenceContour::Presence),
+            (3, PresenceContour::Treble),
         ] {
+            if rate == 16000 && mode == 3 {
+                continue;
+            }
             unsafe {
                 let handle = ec_contour_create(rate, mode);
                 assert!(!handle.is_null());
@@ -73,6 +77,7 @@ fn invalid_arguments_and_empty_input() {
     unsafe {
         assert!(ec_contour_create(48000, 0).is_null());
         assert!(ec_contour_create(16000, 3).is_null());
+        assert!(ec_contour_create(11025, 4).is_null());
         assert_eq!(ec_contour_output_count(std::ptr::null(), 0), usize::MAX);
         assert_eq!(ec_contour_reset(std::ptr::null_mut()), -1);
         let handle = ec_contour_create(11025, 1);

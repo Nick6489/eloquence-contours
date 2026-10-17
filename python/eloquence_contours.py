@@ -7,7 +7,8 @@ from pathlib import Path
 class Contour:
     """One stream. Select the DLL matching the *calling process* architecture.
 
-    mode: 0 Raw, 1 Classic Presence/native Smooth, 2 Presence.
+    mode: 0 Raw, 1 Classic Presence/native Smooth, 2 Presence,
+    3 Presence treble (11025 Hz only).
     Recreate at a rate/mode transition; reset on cancellation or a new stream.
     """
 
@@ -30,7 +31,8 @@ class Contour:
             fn.argtypes, fn.restype = args, result
         if self._dll.ec_contour_abi_version() != 1:
             raise RuntimeError("Unsupported contour ABI")
-        if sample_rate not in (11025, 16000) or mode not in (0, 1, 2):
+        if (sample_rate not in (11025, 16000) or mode not in (0, 1, 2, 3)
+                or (mode == 3 and sample_rate != 11025)):
             raise ValueError("Unsupported contour rate or mode")
         self._handle = self._dll.ec_contour_create(sample_rate, mode)
         if not self._handle:

@@ -21,13 +21,14 @@ running in 64-bit NVDA also uses that same 64-bit DLL.
 
 Use `include/eloquence_contours.h` for C/C++ (`cdecl`, ABI version 1), or copy
 `python/eloquence_contours.py` alongside a Python consumer. No pip dependencies.
-Use an absolute path to load the DLL. The Rust host uses this crate directly
-through its path dependency, so its normal build needs no extra runtime DLL.
+Use an absolute path to load the DLL. Rust callers can also depend on the crate
+directly. The add-on applies the DLL after synthesis, including for hostless OpenEVV.
 
 | Input Hz | Mode | Output Hz | Meaning |
 | --- | --- | --- | --- |
 | 11025 | 0 | 11025 | Raw, exact PCM passthrough |
 | 11025 | 1 or 2 | 22050 | Existing Classic Presence |
+| 11025 | 3 | 22050 | Presence treble, faithful hozosch v19.1 port |
 | 16000 | 0 | 16000 | Raw, exact PCM passthrough |
 | 16000 | 1 | 16000 | Existing native Smooth |
 | 16000 | 2 | 16000 | Existing native Presence |
@@ -54,6 +55,30 @@ Reset after cancellation before accepting the next generation of audio.
 Recreate on input-rate or mode changes. Serialize calls per handle, destroy
 exactly once, and keep the DLL loaded until all its handles are closed.
 The Python adapter provides locking and explicit/context-manager cleanup.
+
+## Presence treble
+
+Module 1.1 adds mode 3, available only at 11025 Hz. It is a literal Rust port
+of [hozosch's v19.1 upsampler.c](https://github.com/hozosch/eloquence_64/blob/f60b6d55da253e4e977e7ea3b0a214ad9bce4a95/upsampler.c).
+It retains the interpolation, adaptive slew smoothing, SVF shaping, both
+notches, 0.80 gain, limiting, rounding and dither. Each handle owns independent
+state. Like the original C, reset clears the filters but preserves the dither
+generator's position. Recreating a handle starts its generator from the seed.
+
+The measured fundamental response sits near -1.9 dB in the bass, rises through
+the midrange, peaks around +2.7 dB at 4.2 kHz, and falls toward unity near the
+input Nyquist limit. Its smoothing depends on signal level, so it is not one
+fixed linear EQ curve. Measurements below use sine peaks of 100 and 4000 PCM
+units, below clipping. The response includes the original 0.80 output gain.
+
+![Measured fundamental gain: bass near minus 1.9 dB, broad upper-presence peak of plus 2.7 dB around 4.2 kHz, falling toward unity near 5.5 kHz.](docs/presence-treble-response.png)
+
+[Download measured response values](docs/presence-treble-response.csv).
+
+The port matches the DLL shipped in the original v19.1 release sample for sample
+for silence, impulse, full-range noise, quiet noise and clipping vectors, across
+callback splits and repeated resets. Run `python -m unittest discover -s python`
+after `build.cmd` to check the preserved golden PCM hashes and existing modes.
 
 ## License and origin
 

@@ -1,6 +1,6 @@
 [package]
 name = "eloquence-contours"
-version = "1.0.0"
+version = "1.1.0"
 edition = "2021"
 license = "GPL-2.0-only"
 description = "Host-independent Eloquence PCM contours with a versioned C ABI"

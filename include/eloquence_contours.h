@@ -10,7 +10,8 @@ extern "C" {
  * One live handle per stream, externally serialized. No overlapping buffers.
  * Destroy before unloading the library. NULL destroy is safe.
  * Rates: 11025 or 16000. Modes: 0 Raw, 1 legacy/default (Classic Presence,
- * native Smooth), 2 Presence. Classic modes 1/2 output 22050 Hz; otherwise
+ * native Smooth), 2 Presence, 3 Presence treble (11025 Hz only).
+ * Classic modes 1/2/3 output 22050 Hz; otherwise
  * output rate equals input rate. Unsupported creation returns NULL.
  */
 typedef struct Contour ec_contour;

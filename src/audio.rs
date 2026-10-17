@@ -13,6 +13,7 @@ pub enum PresenceContour {
     // Wire value 1 retains the former checkbox's native contour selection.
     Enabled,
     Presence,
+    Treble,
 }
 
 #[derive(Debug)]
@@ -21,6 +22,7 @@ pub struct AudioProcessor {
     sample_rate: u32,
     presence: beta2::AudioProcessor,
     smooth: beta4::AudioProcessor,
+    treble: crate::treble::Treble,
 }
 impl Default for AudioProcessor {
     fn default() -> Self {
@@ -34,9 +36,14 @@ impl AudioProcessor {
             sample_rate,
             presence: beta2::AudioProcessor::new(sample_rate),
             smooth: beta4::AudioProcessor::new(sample_rate),
+            treble: crate::treble::Treble::default(),
         }
     }
     pub fn set_contour(&mut self, contour: PresenceContour) {
+        assert!(
+            contour != PresenceContour::Treble || self.sample_rate == 11_025,
+            "Presence treble requires 11025 Hz input"
+        );
         if self.contour != contour {
             self.contour = contour;
             self.presence.set_contour(beta2::PresenceContour::Enabled);
@@ -47,10 +54,12 @@ impl AudioProcessor {
     pub fn reset(&mut self) {
         self.presence.reset();
         self.smooth.reset();
+        self.treble.reset();
     }
     pub fn process(&mut self, input: &[i16]) -> Vec<i16> {
         match self.contour {
             PresenceContour::Disabled => input.to_vec(),
+            PresenceContour::Treble => self.treble.process(input),
             PresenceContour::Presence => self.presence.process(input),
             PresenceContour::Enabled if self.sample_rate == 11_025 => self.presence.process(input),
             PresenceContour::Enabled => self.smooth.process(input),

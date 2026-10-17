@@ -1,5 +1,6 @@
 //! Mono signed 16-bit PCM processing, independent of ECI, NVDA and IPC.
 pub mod audio;
+mod treble;
 use audio::{AudioProcessor, PresenceContour};
 
 pub struct Contour {
@@ -13,6 +14,7 @@ fn selection(value: u32) -> Option<PresenceContour> {
         0 => Some(PresenceContour::Disabled),
         1 => Some(PresenceContour::Enabled),
         2 => Some(PresenceContour::Presence),
+        3 => Some(PresenceContour::Treble),
         _ => None,
     }
 }
@@ -27,7 +29,7 @@ pub extern "C" fn ec_contour_create(rate: u32, mode: u32) -> *mut Contour {
     let Some(mode_value) = selection(mode) else {
         return std::ptr::null_mut();
     };
-    if !matches!(rate, 11_025 | 16_000) {
+    if !matches!(rate, 11_025 | 16_000) || (mode == 3 && rate != 11_025) {
         return std::ptr::null_mut();
     }
     let mut processor = AudioProcessor::new(rate);
